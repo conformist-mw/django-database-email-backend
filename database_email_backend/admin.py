@@ -9,6 +9,7 @@ from django.core.urlresolvers import reverse
 from django.core.mail import message
 from django.db.models import Count
 from django.utils.translation import ugettext as _
+from django.core.exceptions import PermissionDenied
 from django.template.defaultfilters import linebreaks_filter
 
 from database_email_backend.models import Email, Attachment
@@ -38,10 +39,12 @@ class AttachmentInlineAdmin(admin.TabularInline):
             'email_id': str(obj.email_id),
             'attachment_id': str(obj.id),
             'filename': str(obj.filename)
-            }
+        }
         url = reverse(url_name, kwargs=kwargs)
-        return u'<a href="%(url)s">%(fname)s</a>' % {'fname': obj.filename,
-                                                     'url': url}
+        return '<a href="%(url)s">%(fname)s</a>' % {
+            'fname': obj.filename,
+            'url': url
+        }
     file_link.allow_tags = True
 
 
@@ -72,7 +75,7 @@ class EmailAdmin(admin.ModelAdmin):
 
     def get_urls(self):
         urlpatterns = super(EmailAdmin, self).get_urls()
-        from django.conf.urls import url, include
+        from django.conf.urls import url, include  # noqa
 
         def wrap(view):
             def wrapper(*args, **kwargs):
@@ -108,6 +111,7 @@ class EmailAdmin(admin.ModelAdmin):
     body_br.allow_tags = True
     body_br.short_description = 'body'
     body_br.admin_order_field = 'body'
+
 
 admin.site.register(Email, EmailAdmin)
 
@@ -178,4 +182,6 @@ class SendEmailAdmin(admin.ModelAdmin):
             'change': False,
             'delete': False
         }
+
+
 admin.site.register(SendEmail, SendEmailAdmin)
