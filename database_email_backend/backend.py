@@ -1,23 +1,25 @@
-#-*- coding: utf-8 -*-
-from email.MIMEBase import MIMEBase
+# -*- coding: utf-8 -*-
+from email.mime.base import MIMEBase
+
 from django.core.mail.backends.base import BaseEmailBackend
+from django.utils.encoding import smart_text
+
 from database_email_backend.models import Email, Attachment
 
 
 class DatabaseEmailBackend(BaseEmailBackend):
     def send_messages(self, email_messages):
-        if not email_messages:
-            return
         for message in email_messages:
             email = Email.objects.create(
-                from_email = u'%s' % message.from_email,
-                to_emails = u', '.join(message.to),
-                cc_emails = u', '.join(message.cc),
-                bcc_emails = u', '.join(message.bcc),
-                all_recipients = u', '.join(message.recipients()),
-                subject = u'%s' % message.subject,
-                body = u'%s' % message.body,
-                raw = u'%s' % message.message().as_string()
+                from_email='%s' % message.from_email,
+                to_emails=', '.join(message.to),
+                cc_emails=', '.join(message.cc),
+                bcc_emails=', '.join(message.bcc),
+                all_recipients=', '.join(message.recipients()),
+                subject='%s' % message.subject,
+                body='%s' % message.body,
+                raw='%s' % smart_text(message.message().as_string()),
+                reply_to=', '.join(message.reply_to)
             )
             for attachment in message.attachments:
                 if isinstance(attachment, tuple):
@@ -34,3 +36,4 @@ class DatabaseEmailBackend(BaseEmailBackend):
                     content=content,
                     mimetype=mimetype
                 )
+        return len(email_messages)
